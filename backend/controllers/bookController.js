@@ -11,18 +11,29 @@ exports.getAllBooks = async (req, res) => {
 };
 
 // @desc Add a new book
+// controllers/bookController.js
+
+
 exports.addBook = async (req, res) => {
-  const { title, author, description, quantity } = req.body;
   try {
-    const book = await Book.create({ 
-      title, 
-      author, 
-      description, 
-      quantity: quantity || 1 
+    const { title, author, description, availableCopies } = req.body;
+
+    if (!title || !author) {
+      return res.status(400).json({ message: "Title and author are required" });
+    }
+
+    const book = new Book({
+      title,
+      author,
+      description,
+      availableCopies: availableCopies || 1, // default 1 copy
     });
-    res.status(201).json(book);
+
+    await book.save();
+    res.status(201).json({ message: "Book added successfully", book });
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Error in addBook:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
