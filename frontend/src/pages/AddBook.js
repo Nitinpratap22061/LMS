@@ -18,59 +18,70 @@ const AddBook = () => {
   const [formData, setFormData] = useState({
     title: '',
     author: '',
-    description: ''
+    description: '',
+    availableCopies: 1 // ✅ Added this for backend consistency
   });
+
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // ✅ Handle input change
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // ✅ Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!formData.title || !formData.author) {
-      setError('Title and author are required');
+
+    // Basic validation
+    if (!formData.title.trim() || !formData.author.trim()) {
+      setError('Title and author are required.');
       return;
     }
-    
+
     setLoading(true);
     setError('');
-    
+
     try {
-      await addBook(formData);
-      setSuccess(true);
-      setFormData({ title: '', author: '', description: '' });
+      const response = await addBook(formData);
+
+      if (response?.success) {
+        setSuccess(true);
+        setFormData({ title: '', author: '', description: '', availableCopies: 1 });
+      } else {
+        setError(response?.message || 'Failed to add book.');
+      }
     } catch (err) {
+      console.error('Error adding book:', err);
       setError('Failed to add book. Please try again.');
     } finally {
       setLoading(false);
     }
   };
-  
-  const handleSnackbarClose = (event, reason) => {
-    if (reason === 'clickaway') {
-      return;
-    }
+
+  // ✅ Snackbar close handler
+  const handleSnackbarClose = (_, reason) => {
+    if (reason === 'clickaway') return;
     setSuccess(false);
   };
 
   return (
-    <Container maxWidth="md">
-      <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
+    <Container maxWidth="sm">
+      <Paper elevation={3} sx={{ p: 4, mt: 5, borderRadius: 2 }}>
         <Typography variant="h4" component="h1" gutterBottom align="center">
           Add New Book
         </Typography>
-        
+
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
-        
+
         <Box component="form" onSubmit={handleSubmit} noValidate>
           <TextField
             margin="normal"
@@ -83,7 +94,7 @@ const AddBook = () => {
             value={formData.title}
             onChange={handleChange}
           />
-          
+
           <TextField
             margin="normal"
             required
@@ -94,7 +105,7 @@ const AddBook = () => {
             value={formData.author}
             onChange={handleChange}
           />
-          
+
           <TextField
             margin="normal"
             fullWidth
@@ -106,15 +117,28 @@ const AddBook = () => {
             value={formData.description}
             onChange={handleChange}
           />
-          
+
+          <TextField
+            margin="normal"
+            fullWidth
+            id="availableCopies"
+            label="Available Copies"
+            name="availableCopies"
+            type="number"
+            inputProps={{ min: 1 }}
+            value={formData.availableCopies}
+            onChange={handleChange}
+          />
+
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
             <Button
               variant="outlined"
+              color="secondary"
               onClick={() => navigate('/')}
             >
               Cancel
             </Button>
-            
+
             <Button
               type="submit"
               variant="contained"
@@ -125,12 +149,13 @@ const AddBook = () => {
           </Box>
         </Box>
       </Paper>
-      
+
+      {/* ✅ Snackbar for success message */}
       <Snackbar
         open={success}
-        autoHideDuration={6000}
+        autoHideDuration={4000}
         onClose={handleSnackbarClose}
-        message="Book added successfully"
+        message="Book added successfully!"
         action={
           <IconButton
             size="small"
@@ -146,4 +171,4 @@ const AddBook = () => {
   );
 };
 
-export default AddBook; 
+export default AddBook;
